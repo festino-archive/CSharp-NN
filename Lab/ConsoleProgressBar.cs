@@ -13,12 +13,14 @@ namespace Lab
         static readonly int stepCount = filling.Length - 1;
         static readonly double step = 1.0 / stepCount;
         static readonly int length = 20;
+        readonly int Row;
         StringBuilder BackBuffer = new StringBuilder();
         bool reprinting = true;
 
         public ConsoleProgressBar(bool reprinting = false)
         {
             this.reprinting = reprinting;
+            Row = Console.CursorTop;
         }
 
         public void Write(double progress, string additional)
@@ -54,7 +56,7 @@ namespace Lab
             if (reprinting)
                 Console.WriteLine(BackBuffer);
             else
-                Console.Clear(); // TODO fix flicker: https://stackoverflow.com/questions/5435460/console-application-how-to-update-the-display-without-flicker
+                Console.SetCursorPosition(0, Row); // TODO fix flicker: https://stackoverflow.com/questions/5435460/console-application-how-to-update-the-display-without-flicker
             Console.Write(bar);
             if (BackBuffer.Length > bar.Length)
                 BackBuffer.Remove(bar.Length, BackBuffer.Length - bar.Length);

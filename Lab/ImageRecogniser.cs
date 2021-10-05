@@ -39,7 +39,6 @@ namespace Lab
 
         readonly CancellationTokenSource TokenSource;
         readonly CancellationToken Token;
-        readonly ConsoleProgressBar progress;
         readonly Dictionary<string, int> CurrentResults;
 
         public ImageRecogniser(string fullPath, string modelPath, int threadNum = 2)
@@ -50,7 +49,6 @@ namespace Lab
             PredictionEngines = new ConcurrentStack<YoloPredictionEngine>();
             TokenSource = new CancellationTokenSource();
             Token = TokenSource.Token;
-            progress = new ConsoleProgressBar();
             CurrentResults = new Dictionary<string, int>();
         }
 
@@ -72,6 +70,7 @@ namespace Lab
             options.CancellationToken = Token;
             int count = filenames.Length;
 
+            ConsoleProgressBar progress = new ConsoleProgressBar();
             progress.Write(0.0, "");
             var processImageBlock = new TransformBlock<string, RecognisionResult>(imagePath =>
             {

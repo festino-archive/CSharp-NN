@@ -16,21 +16,27 @@ namespace Lab
             // input - full path
             string path, modelPath = "";
             int threadNum = 0;
-            if (args.Length > 1)
+            if (args.Length > 0)
             {
-                path = args[1];
-                if (args.Length > 2)
+                path = args[0];
+                if (path == "help")
                 {
-                    int.TryParse(args[2], out threadNum);
+                    PrintHelp();
+                    return;
+                }
+
+                if (args.Length > 1)
+                {
+                    int.TryParse(args[1], out threadNum);
                     if (threadNum < 0)
                         threadNum = 0;
                 }
-                if (args.Length > 3)
-                    modelPath = args[3];
+                if (args.Length > 2)
+                    modelPath = args[2];
             }
             else
             {
-                Console.WriteLine($"Use args: \n\t(1) image dir, \n\t(2) thread number(0 to default), \n\t(3) model path");
+                PrintHelp();
                 Console.WriteLine($"Please enter image directory path: ");
                 path = Console.ReadLine();
             }
@@ -45,7 +51,6 @@ namespace Lab
                 if (Console.ReadKey().KeyChar == 'c')
                     recogniser.Stop();
                 Console.WriteLine("\nPress any key to exit");
-                return;
             });
 
             var results = await recogniser.Start();
@@ -64,6 +69,10 @@ namespace Lab
                 }
             }
             Console.ReadLine();
+        }
+        static private void PrintHelp()
+        {
+            Console.WriteLine($"Use args: \n\t(0) image dir, \n\t(1) thread number(0 to use max), \n\t(2) model path");
         }
     }
 }
