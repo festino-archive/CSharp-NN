@@ -4,36 +4,48 @@ using System.Threading.Tasks;
 
 namespace Lab
 {
+    // 2b => TPL Flow + progress bar
     class Program
     {
-        // 2b => TPL Flow + progress bar
+        readonly static string ModelPath = "..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
 
         static async Task Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
 
             // input - full path
-            string path;
+            string path, modelPath = "";
+            int threadNum = 0;
             if (args.Length > 1)
             {
                 path = args[1];
-                for (int i = 2; i < args.Length; i++)
-                    path += " " + args[i];
+                if (args.Length > 2)
+                {
+                    int.TryParse(args[2], out threadNum);
+                    if (threadNum < 0)
+                        threadNum = 0;
+                }
+                if (args.Length > 3)
+                    modelPath = args[3];
             }
             else
             {
+                Console.WriteLine($"Use args: \n\t(1) image dir, \n\t(2) thread number(0 to default), \n\t(3) model path");
                 Console.WriteLine($"Please enter image directory path: ");
                 path = Console.ReadLine();
             }
+            if (modelPath == "")
+                modelPath = ModelPath;
             Console.WriteLine($"Using path \"{path}\"...");
 
-            ImageRecogniser recogniser = new ImageRecogniser(path);
+            ImageRecogniser recogniser = new ImageRecogniser(path, modelPath, Environment.ProcessorCount);
 
             Task.Factory.StartNew(() =>
             {
                 if (Console.ReadKey().KeyChar == 'c')
                     recogniser.Stop();
                 Console.WriteLine("\nPress any key to exit");
+                return;
             });
 
             var results = await recogniser.Start();

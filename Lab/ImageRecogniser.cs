@@ -31,7 +31,7 @@ namespace Lab
         readonly int ThreadNum;
         private ConcurrentStack<YoloPredictionEngine> PredictionEngines;
 
-        readonly string ModelPath = "\\YOLOv4 Model\\yolov4.onnx";
+        readonly string ModelPath;
         string FullModelPath;
         string[] supportedExtensions = { ".jpg", ".png" };
         readonly string ImagePath;
@@ -42,9 +42,10 @@ namespace Lab
         readonly ConsoleProgressBar progress;
         readonly Dictionary<string, int> CurrentResults;
 
-        public ImageRecogniser(string fullPath, int threadNum = 2)
+        public ImageRecogniser(string fullPath, string modelPath, int threadNum = 2)
         {
             ImagePath = fullPath;
+            ModelPath = modelPath;
             ThreadNum = threadNum;
             PredictionEngines = new ConcurrentStack<YoloPredictionEngine>();
             TokenSource = new CancellationTokenSource();
@@ -55,11 +56,11 @@ namespace Lab
 
         public async Task<ConcurrentBag<RecognisionResult>> Start()
         {
-            FullModelPath = Path.GetFullPath(Directory.GetCurrentDirectory() + ModelPath);
+            FullModelPath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ModelPath);
             Console.WriteLine("Using model: " + FullModelPath);
             await InitPredictionEngines();
 
-            FullImagePath = Path.GetFullPath(Directory.GetCurrentDirectory() + ImagePath);
+            FullImagePath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ImagePath);
             string[] filenames = Directory.EnumerateFiles(FullImagePath, "*.*")
                 .Where(file => supportedExtensions.Any(x => file.EndsWith(x, StringComparison.OrdinalIgnoreCase)))
                 .ToArray();
@@ -69,6 +70,25 @@ namespace Lab
             ConcurrentBag<RecognisionResult> result = new ConcurrentBag<RecognisionResult>();
             ParallelOptions options = new ParallelOptions();
             options.CancellationToken = Token;
+            int count = filenames.Length;
+
+            progress.Write(0.0, "");
+            var processImageBlock = new TransformBlock<string, RecognisionResult>(imagePath =>
+            {
+                YoloPredictionEngine engine;
+                PredictionEngines.TryPop(out engine);
+                var results = Predict(imagePath, engine);
+                PredictionEngines.Push(engine);
+                List<DetectedObject> objects = new List<DetectedObject>();
+                foreach (var res in results)
+                    objects.Add(new DetectedObject(res));
+                return new RecognisionResult(Path.GetFileName(imagePath), objects);
+            },
+            new ExecutionDataflowBlockOptions
+            {
+                CancellationToken = Token,
+                MaxDegreeOfParallelism = ThreadNum
+            });
 
             var storeInfoBlock = new ActionBlock<RecognisionResult>(recognisionResult =>
             {
@@ -86,7 +106,9 @@ namespace Lab
                 string info = "";
                 foreach (var keyval in CurrentResults)
                     info = info + keyval.Key + ": " + keyval.Value + "\n";
-                progress.Write(result.Count / (double)filenames.Length, info);
+                progress.Write(result.Count / (double)count, info);
+                if (result.Count == count)
+                    processImageBlock.Complete();
             },
             new ExecutionDataflowBlockOptions
             {
@@ -94,38 +116,8 @@ namespace Lab
                 MaxDegreeOfParallelism = 1
             });
 
-            progress.Write(0.0, "");
-            var processImageBlock = new ActionBlock<int>(fileNum =>
-            {
-                string imageName = filenames[fileNum];
-                YoloPredictionEngine engine;
-                PredictionEngines.TryPop(out engine);
-                var results = Predict(imageName, engine);
-                PredictionEngines.Push(engine);
-                List<DetectedObject> objects = new List<DetectedObject>();
-                foreach (var res in results)
-                {
-                    var label = res.Label;
-                    var x1 = res.BBox[0];
-                    var y1 = res.BBox[1];
-                    var x2 = res.BBox[2];
-                    var y2 = res.BBox[3];
-                    objects.Add(new DetectedObject(res));
-                    if (CurrentResults.ContainsKey(label))
-                        CurrentResults[label]++;
-                    else
-                        CurrentResults[label] = 1;
-                }
-                storeInfoBlock.Post(new RecognisionResult(Path.GetFileName(imageName), objects));
-            },
-            new ExecutionDataflowBlockOptions
-            {
-                CancellationToken = Token,
-                MaxDegreeOfParallelism = ThreadNum
-            });
-
-            Parallel.For(0, filenames.Length, options, i => processImageBlock.Post(i));
-            processImageBlock.Complete();
+            processImageBlock.LinkTo(storeInfoBlock);
+            Parallel.For(0, count, options, fileNum => processImageBlock.Post(filenames[fileNum]));
 
             await Task.WhenAll(processImageBlock.Completion);
             CurrentResults.Clear();
@@ -154,7 +146,6 @@ namespace Lab
 
             var ab = new ActionBlock<int>(async index =>
             {
-                //Console.WriteLine("Starting initialization #" + index);
                 var engine = mlContext.Model.CreatePredictionEngine<YoloV4BitmapData, YoloV4Prediction>(model);
                 PredictionEngines.Push(engine);
             },

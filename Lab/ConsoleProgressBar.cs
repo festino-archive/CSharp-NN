@@ -54,7 +54,7 @@ namespace Lab
             if (reprinting)
                 Console.WriteLine(BackBuffer);
             else
-                Console.Clear();
+                Console.Clear(); // TODO fix flicker: https://stackoverflow.com/questions/5435460/console-application-how-to-update-the-display-without-flicker
             Console.Write(bar);
             if (BackBuffer.Length > bar.Length)
                 BackBuffer.Remove(bar.Length, BackBuffer.Length - bar.Length);
