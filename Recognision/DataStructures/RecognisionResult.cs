@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using YOLOv4MLNet.DataStructures;
 
 namespace Lab
 {
-    class RecognisionResult
+    public class RecognisionResult
     {
         public string Filename;
         public List<DetectedObject> Objects;
@@ -20,19 +17,21 @@ namespace Lab
         }
     }
 
-    class DetectedObject
+    public class DetectedObject
     {
         public string Label;
-        public Int32Rect Box;
+        public int X1 { get; private set; }
+        public int Y1 { get; private set; }
+        public int X2 { get; private set; }
+        public int Y2 { get; private set; }
 
         public DetectedObject(YoloV4Result res)
         {
             Label = res.Label;
-            int x1 = (int)Math.Floor(res.BBox[0]);
-            int y1 = (int)Math.Floor(res.BBox[1]);
-            int x2 = (int)Math.Floor(res.BBox[2]);
-            int y2 = (int)Math.Floor(res.BBox[3]);
-            Box = new Int32Rect(x1, y1, x2 - x1, y2 - y1);
+            X1 = (int)Math.Floor(res.BBox[0]);
+            Y1 = (int)Math.Floor(res.BBox[1]);
+            X2 = (int)Math.Floor(res.BBox[2]);
+            Y2 = (int)Math.Floor(res.BBox[3]);
         }
     }
 }
