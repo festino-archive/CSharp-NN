@@ -120,6 +120,14 @@ namespace Lab
             if (imageCount >= 0)
                 return;
 
+            FullImagePath = ImagePath.Trim();
+            if (FullImagePath.Length == 0 || FullImagePath.Contains(new string(Path.GetInvalidFileNameChars())))
+            {
+                Filenames = null;
+                imageCount = 0;
+                return;
+            }
+
             FullImagePath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ImagePath);
             Filenames = Directory.EnumerateFiles(FullImagePath, "*.*")
                 .Where(file => supportedExtensions.Any(x => file.EndsWith(x, StringComparison.OrdinalIgnoreCase)))

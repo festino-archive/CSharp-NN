@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "1_Console", "Lab\1_Console.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recognision", "Recognision\Recognision.csproj", "{3B5EC012-8BE0-4D94-A0FB-5374169CF9E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2_GUI", "2_GUI\2_GUI.csproj", "{A2D5977D-B8C7-4120-B240-836E67D38FB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{3B5EC012-8BE0-4D94-A0FB-5374169CF9E3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3B5EC012-8BE0-4D94-A0FB-5374169CF9E3}.Release|x64.ActiveCfg = Release|Any CPU
 		{3B5EC012-8BE0-4D94-A0FB-5374169CF9E3}.Release|x64.Build.0 = Release|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Debug|x64.ActiveCfg = Debug|x64
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Debug|x64.Build.0 = Debug|x64
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Release|x64.ActiveCfg = Release|Any CPU
+		{A2D5977D-B8C7-4120-B240-836E67D38FB4}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
