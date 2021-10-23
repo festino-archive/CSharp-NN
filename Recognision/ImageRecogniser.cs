@@ -16,8 +16,10 @@ using YoloPredictionEngine = Microsoft.ML.PredictionEngine<YOLOv4MLNet.DataStruc
 
 namespace Lab
 {
-    public class ImageRecogniser
+    public class ImageRecogniser : IDisposable
     {
+        private bool disposed = false;
+
         static readonly string[] classesNames = new string[] {
             "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light",
             "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
@@ -197,6 +199,16 @@ namespace Lab
 
             // Fit on empty list to obtain input data schema
             return pipeline.Fit(mlContext.Data.LoadFromEnumerable(new List<YoloV4BitmapData>()));
+        }
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                PredictionEngines.Clear();
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

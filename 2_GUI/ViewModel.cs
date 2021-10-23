@@ -13,7 +13,7 @@ namespace Lab
 
         public event Action RecognisionFinished;
         public event Action ResultUpdated;
-        public Dictionary<string, List<ImageObject>> Result;
+        public Dictionary<string, List<ImageObject>> Result = new Dictionary<string, List<ImageObject>>();
         public int ImageCount
         {
             get {
@@ -33,7 +33,7 @@ namespace Lab
                 return;
             }
 
-            Result = new Dictionary<string, List<ImageObject>>();
+            Result.Clear();
             BufferBlock<RecognisionResult> bufferBlock = new BufferBlock<RecognisionResult>(new ExecutionDataflowBlockOptions
             {
                 CancellationToken = recogniser.Token
@@ -71,7 +71,9 @@ namespace Lab
                     break;
             }
 
+            recogniser.Dispose();
             recogniser = null;
+            GC.Collect();
             RecognisionFinished?.Invoke();
         }
 
