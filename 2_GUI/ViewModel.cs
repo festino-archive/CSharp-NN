@@ -71,7 +71,6 @@ namespace Lab
                     break;
             }
 
-            recogniser.Dispose();
             recogniser = null;
             GC.Collect();
             RecognisionFinished?.Invoke();
