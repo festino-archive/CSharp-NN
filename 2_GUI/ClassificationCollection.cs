@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -10,6 +11,7 @@ namespace Lab
         private ObservableCollection<ClassificationCategory> coll = new ObservableCollection<ClassificationCategory>();
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
+        public event Action ChildChanged;
 
         public int ObjectCount { get; private set; }
         public int Count { get => coll.Count; }
@@ -36,8 +38,8 @@ namespace Lab
                 list = coll[index].FoundObjects;
             }
             list.Add(obj);
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, (object)coll[index], (object)coll[index], index));
-            //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, (object)coll[index], (object)coll[index], index));
+            ChildChanged?.Invoke();
 
             ObjectCount++;
         }

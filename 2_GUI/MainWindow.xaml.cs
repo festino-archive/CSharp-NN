@@ -30,8 +30,8 @@ namespace Lab
 
             viewModel.RecognisionFinished += RecognisingButtonStopAsync;
             viewModel.ResultUpdated += UpdateResultSynchronised;
-            Result.CollectionChanged += ReplaceWorkaround;
             listBox_ObjectList.ItemsSource = Result;
+            Result.ChildChanged += ReplaceWorkaround;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -93,10 +93,12 @@ namespace Lab
             wrapPanel_ObjectImages.ItemsSource = null;
         }
 
-        private void ReplaceWorkaround(object sender, NotifyCollectionChangedEventArgs e)
+        private void ReplaceWorkaround()
         {
-            if (e.Action == NotifyCollectionChangedAction.Replace)
-                listBox_ObjectList.Items.Refresh();
+            // TO REWORK? ListBox just can't
+            // the problem is that the most frequently used change(Replace)
+            // doen't work or cause list view rebuilding
+            listBox_ObjectList.Items.Refresh();
         }
 
         private void button_ChooseImagesDir_Click(object sender, RoutedEventArgs e)
