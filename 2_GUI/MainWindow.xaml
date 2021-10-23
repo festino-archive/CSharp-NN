@@ -17,8 +17,9 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBox Name="textBox_ImagesDir" HorizontalAlignment="Left" MinWidth="150" Margin="0 0 10 0" TextChanged="textBox_ImagesDir_TextChanged"></TextBox>
-            <Button Name="button_ChooseImagesDir" HorizontalAlignment="Left" Width="25" Grid.Column="1" Height="20" VerticalAlignment="Bottom" Click="button_ChooseImagesDir_Click">...</Button>
+            <TextBox Name="textBox_ImagesDir" MinWidth="150" Margin="0 0 10 0" HorizontalAlignment="Left" TextChanged="textBox_ImagesDir_TextChanged"/>
+            <Button Name="button_ChooseImagesDir" Content="..." Grid.Column="1" Width="25" Height="20" HorizontalAlignment="Left"
+                    Click="button_ChooseImagesDir_Click"/>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -26,16 +27,17 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
-            <Grid Margin="5">
+            <Grid Margin="5 10 5 5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="1*"/>
                 </Grid.RowDefinitions>
-                <Button Name="button_RecogniseButton" HorizontalAlignment="Center" VerticalAlignment="Top" Padding="5" Click="button_RecogniseButton_Click">Распознать</Button>
-                <ProgressBar Name="progressBar_RecognisionProgress" Grid.Row="1" Height="8" Margin="0 5 0 5"/>
-                <TextBlock Grid.Row="2" Margin="0 5 0 5">Найденные объекты:</TextBlock>
+                <Button Name="button_RecogniseButton" Content="Классифицировать" HorizontalAlignment="Center" VerticalAlignment="Top" Padding="5"
+                        Click="button_RecogniseButton_Click"/>
+                <ProgressBar Name="progressBar_RecognisionProgress" Grid.Row="1" Height="8" Margin="0 5 0 5" Maximum="1" Visibility="Hidden"/>
+                <TextBlock Grid.Row="2" Margin="3 5 3 5" HorizontalAlignment="Center">Найденные объекты</TextBlock>
                 <ListBox Name="listBox_ObjectList" Grid.Row="3" SelectionChanged="listBox_ObjectList_SelectionChanged">
                     <!--   ItemsSource="{Binding Path=viewModel.Result}">   -->
                     <ListBox.ItemTemplate>
@@ -53,7 +55,25 @@
             </Grid>
             <ScrollViewer Name="scrollViewer_ObjectImages" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                           Grid.Column="1" Margin="5" HorizontalAlignment="Left" VerticalAlignment="Top">
-                <WrapPanel Name="wrapPanel_ObjectImages" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <ItemsControl Name="wrapPanel_ObjectImages" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Image Source="{Binding CroppedImage}" Width="150" Height="130"/>
+                                <TextBlock Text="{Binding Filename}" HorizontalAlignment="Center" Grid.Row="1"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </ScrollViewer>
         </Grid>
     </Grid>

@@ -4,7 +4,6 @@ using System.IO;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 
 namespace Lab
 {
@@ -13,8 +12,11 @@ namespace Lab
     /// </summary>
     public partial class MainWindow : Window
     {
-        string RecogniseButton_textBuffer = "Прервать";
-        bool recognising = false;
+        private readonly string RecogniseButton_textToStart = "Классифицировать";
+        private readonly string RecogniseButton_textToStop = "Прервать";
+        private readonly string RecogniseButton_textStopping = "Прерывается...";
+        private enum RecognisionState { PROCESSING, STOPPING, READY }
+        RecognisionState recognising = RecognisionState.READY;
 
         internal readonly ViewModel viewModel = new ViewModel();
 
@@ -31,31 +33,58 @@ namespace Lab
             DataContext = this;
         }
 
-        private void SetRecognisingState(bool isRecognising)
+        private void SetRecognisingState(RecognisionState isRecognising)
         {
             if (recognising == isRecognising)
                 return;
-            recognising = !recognising;
-            string s = (string)button_RecogniseButton.Content;
-            button_RecogniseButton.Content = RecogniseButton_textBuffer;
-            RecogniseButton_textBuffer = s;
-            
-            button_RecogniseButton.IsEnabled = Directory.Exists(textBox_ImagesDir.Text) || recognising;
+            recognising = isRecognising;
+
+            if (recognising == RecognisionState.STOPPING)
+                button_RecogniseButton.Content = RecogniseButton_textStopping;
+            else if (recognising == RecognisionState.PROCESSING)
+                button_RecogniseButton.Content = RecogniseButton_textToStop;
+            else if (recognising == RecognisionState.READY)
+                button_RecogniseButton.Content = RecogniseButton_textToStart;
+
+            if (recognising == RecognisionState.READY)
+                progressBar_RecognisionProgress.Visibility = Visibility.Hidden;
+            else
+                progressBar_RecognisionProgress.Visibility = Visibility.Visible;
+
+            UpdateRecogniseButton();
         }
 
         private void RecognisingButtonStopAsync()
         {
-            Dispatcher.BeginInvoke(new Action<bool>(SetRecognisingState), false);
+            Dispatcher.BeginInvoke(new Action<RecognisionState>(SetRecognisingState), RecognisionState.READY);
         }
 
         private void UpdateResult()
         {
+            object selected = listBox_ObjectList.SelectedItem;
             listBox_ObjectList.ItemsSource = null;
-            listBox_ObjectList.ItemsSource = viewModel.Result; // cause exceptions
+            listBox_ObjectList.ItemsSource = viewModel.Result; // cause exceptions?
+            listBox_ObjectList.SelectedItem = selected;
+
+            if (viewModel.ImageCount > 0)
+                progressBar_RecognisionProgress.Value = viewModel.Result.Count / (double)viewModel.ImageCount;
         }
         private void UpdateResultAsync()
         {
             Dispatcher.BeginInvoke(new Action(UpdateResult));
+        }
+        private void UpdateRecogniseButton()
+        {
+            button_RecogniseButton.IsEnabled = Directory.Exists(textBox_ImagesDir.Text) || recognising != RecognisionState.STOPPING;
+        }
+
+        private void ResetDisplay()
+        {
+            progressBar_RecognisionProgress.Value = 0.0;
+            scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
+            listBox_ObjectList.ItemsSource = null;
+            listBox_ObjectList.SelectedIndex = -1;
+            wrapPanel_ObjectImages.ItemsSource = null;
         }
 
         private void button_ChooseImagesDir_Click(object sender, RoutedEventArgs e)
@@ -70,9 +99,10 @@ namespace Lab
 
         private void button_RecogniseButton_Click(object sender, RoutedEventArgs e)
         {
-            SetRecognisingState(!recognising);
-            if (recognising)
+            if (recognising == RecognisionState.READY)
             {
+                SetRecognisingState(RecognisionState.PROCESSING);
+                ResetDisplay();
                 string fileDir = textBox_ImagesDir.Text;
                 Thread thread = new Thread(() =>
                 {
@@ -83,27 +113,24 @@ namespace Lab
             }
             else
             {
+                SetRecognisingState(RecognisionState.STOPPING);
                 viewModel.StopRecognision();
             }
         }
 
         private void textBox_ImagesDir_TextChanged(object sender, TextChangedEventArgs e)
         {
-            button_RecogniseButton.IsEnabled = Directory.Exists(textBox_ImagesDir.Text) || recognising;
+            UpdateRecogniseButton();
         }
 
         private void listBox_ObjectList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
-            wrapPanel_ObjectImages.Children.Clear();
-            string selected = ((KeyValuePair<string, List<ImageObject>>) listBox_ObjectList.SelectedItem).Key;
-            foreach (ImageObject obj in viewModel.Result[selected])
+            if (listBox_ObjectList.SelectedItem != null)
             {
-                Int32Rect rect = new Int32Rect(obj.X1, obj.Y1, obj.X2 - obj.X1, obj.Y2 - obj.Y1);
-                CroppedBitmap cropped = new CroppedBitmap(obj.Image, rect);
-                Image img = new Image();
-                img.Source = cropped; // label filename below
-                wrapPanel_ObjectImages.Children.Add(img);
+                wrapPanel_ObjectImages.ItemsSource = null; // TO DO use observable collection
+                wrapPanel_ObjectImages.ItemsSource = ((KeyValuePair<string, List<ImageObject>>)listBox_ObjectList.SelectedItem).Value;
+                if (listBox_ObjectList.SelectedItems.Count - e.AddedItems.Count + e.RemovedItems.Count > 0)
+                    scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
             }
         }
     }

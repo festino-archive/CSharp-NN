@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using System.Windows.Media.Imaging;
 
@@ -18,6 +14,14 @@ namespace Lab
         public event Action RecognisionFinished;
         public event Action ResultUpdated;
         public Dictionary<string, List<ImageObject>> Result;
+        public int ImageCount
+        {
+            get {
+                if (recogniser == null)
+                    return 0;
+                return recogniser.ImageCount;
+            }
+        }
 
         public void Recognise(string imageDir)
         {
