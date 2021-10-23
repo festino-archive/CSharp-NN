@@ -13,8 +13,7 @@ namespace Lab
         ImageRecogniser recogniser;
 
         public event Action RecognisionFinished;
-        public event Action ResultUpdated;
-        public AsyncObservableCollection<ClassificationCategory> Result = new AsyncObservableCollection<ClassificationCategory>();
+        public event Action<string[], ImageObject[]> ResultUpdated;
         public int ImageCount
         {
             get {
@@ -34,7 +33,6 @@ namespace Lab
                 return;
             }
 
-            Result.Clear();
             BufferBlock<RecognisionResult> bufferBlock = new BufferBlock<RecognisionResult>(new ExecutionDataflowBlockOptions
             {
                 CancellationToken = recogniser.Token
@@ -55,29 +53,19 @@ namespace Lab
                 }
 
                 List<DetectedObject> objects = res.Objects;
+                string[] labels = new string[objects.Count];
+                ImageObject[] imageResult = new ImageObject[objects.Count];
+
                 var uri = new Uri(Path.Combine(imageDir, res.Filename));
                 BitmapImage image = new BitmapImage(uri);
                 image.Freeze();
-                foreach (DetectedObject obj in objects)
+                for (int i = 0; i < imageResult.Length; i++)
                 {
-                    ObservableCollection<ImageObject> list = null;
-                    for (int i = 0; i < Result.Count; i++)
-                        if (Result[i].Name == obj.Label)
-                        {
-                            list = Result[i].FoundObjects;
-                            break;
-                        }
-                    if (list == null)
-                    {
-                        var cc = new ClassificationCategory(obj.Label);
-                        Result.Add(cc);
-                        list = cc.FoundObjects;
-                    }
-
-                    ImageObject resObj = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
-                    list.Add(resObj);
+                    DetectedObject obj = objects[i];
+                    labels[i] = obj.Label;
+                    imageResult[i] = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
                 }
-                ResultUpdated?.Invoke();
+                ResultUpdated?.Invoke(labels, imageResult);
 
                 count++;
                 if (count == recogniser.ImageCount)

@@ -35,7 +35,7 @@ namespace Lab
         public ClassificationCategory(string name)
         {
             Name = name;
-            FoundObjects = new AsyncObservableCollection<ImageObject>();
+            FoundObjects = new ObservableCollection<ImageObject>();
         }
     }
 }

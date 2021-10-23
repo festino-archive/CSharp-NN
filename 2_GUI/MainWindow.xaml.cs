@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading;
 using System.Windows;
@@ -19,14 +21,17 @@ namespace Lab
         RecognisionState recognising = RecognisionState.READY;
 
         internal readonly ViewModel viewModel = new ViewModel();
+        ClassificationCollection Result = new ClassificationCollection();
 
         public MainWindow()
         {
             InitializeComponent();
+            // may be sorted using CollectionViewSource
 
             viewModel.RecognisionFinished += RecognisingButtonStopAsync;
-            viewModel.ResultUpdated += UpdateResultAsync;
-            listBox_ObjectList.ItemsSource = viewModel.Result;
+            viewModel.ResultUpdated += UpdateResultSynchronised;
+            Result.CollectionChanged += ReplaceWorkaround;
+            listBox_ObjectList.ItemsSource = Result;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -60,27 +65,38 @@ namespace Lab
             Dispatcher.BeginInvoke(new Action<RecognisionState>(SetRecognisingState), RecognisionState.READY);
         }
 
-        private void UpdateResult()
+        private void UpdateResult(string[] labels, ImageObject[] imageResult)
         {
+            for (int i = 0; i < labels.Length; i++)
+            {
+                Result.Add(labels[i], imageResult[i]);
+            }
+
             if (viewModel.ImageCount > 0)
-                progressBar_RecognisionProgress.Value = viewModel.Result.Count / (double)viewModel.ImageCount;
+                progressBar_RecognisionProgress.Value = Result.ObjectCount / (double)viewModel.ImageCount;
         }
-        private void UpdateResultAsync()
+        private void UpdateResultSynchronised(string[] labels, ImageObject[] imageResult)
         {
-            Dispatcher.BeginInvoke(new Action(UpdateResult));
+            Dispatcher.BeginInvoke(new Action<string[], ImageObject[]>(UpdateResult), labels, imageResult);
         }
         private void UpdateRecogniseButton()
         {
-            button_RecogniseButton.IsEnabled = Directory.Exists(textBox_ImagesDir.Text) || recognising != RecognisionState.STOPPING;
+            bool canStart = Directory.Exists(textBox_ImagesDir.Text) && recognising == RecognisionState.READY;
+            button_RecogniseButton.IsEnabled = canStart || recognising == RecognisionState.PROCESSING;
         }
 
         private void ResetDisplay()
         {
             progressBar_RecognisionProgress.Value = 0.0;
             scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
-            //listBox_ObjectList.ItemsSource = null;
             listBox_ObjectList.SelectedIndex = -1;
             wrapPanel_ObjectImages.ItemsSource = null;
+        }
+
+        private void ReplaceWorkaround(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Replace)
+                listBox_ObjectList.Items.Refresh();
         }
 
         private void button_ChooseImagesDir_Click(object sender, RoutedEventArgs e)
@@ -99,6 +115,7 @@ namespace Lab
             {
                 SetRecognisingState(RecognisionState.PROCESSING);
                 ResetDisplay();
+                Result.Clear();
                 string fileDir = textBox_ImagesDir.Text;
                 Thread thread = new Thread(() =>
                 {
