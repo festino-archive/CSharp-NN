@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using System.Windows.Media.Imaging;
 
 namespace Lab
 {
@@ -48,11 +50,14 @@ namespace Lab
                 }
 
                 List<DetectedObject> objects = res.Objects;
+                var uri = new Uri(Path.Combine(imageDir, res.Filename));
+                BitmapImage image = new BitmapImage(uri);
+                image.Freeze();
                 foreach (DetectedObject obj in objects)
                 {
                     if (!Result.ContainsKey(obj.Label))
                         Result[obj.Label] = new List<ImageObject>();
-                    ImageObject resObj = new ImageObject(res.Filename, obj.X1, obj.Y1, obj.X2, obj.Y2);
+                    ImageObject resObj = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
                     Result[obj.Label].Add(resObj);
                 }
                 ResultUpdated?.Invoke();

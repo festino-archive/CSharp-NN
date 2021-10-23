@@ -1,19 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace Lab
 {
@@ -33,6 +24,11 @@ namespace Lab
 
             viewModel.RecognisionFinished += RecognisingButtonStopAsync;
             viewModel.ResultUpdated += UpdateResultAsync;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            DataContext = this;
         }
 
         private void SetRecognisingState(bool isRecognising)
@@ -94,6 +90,21 @@ namespace Lab
         private void textBox_ImagesDir_TextChanged(object sender, TextChangedEventArgs e)
         {
             button_RecogniseButton.IsEnabled = Directory.Exists(textBox_ImagesDir.Text) || recognising;
+        }
+
+        private void listBox_ObjectList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
+            wrapPanel_ObjectImages.Children.Clear();
+            string selected = ((KeyValuePair<string, List<ImageObject>>) listBox_ObjectList.SelectedItem).Key;
+            foreach (ImageObject obj in viewModel.Result[selected])
+            {
+                Int32Rect rect = new Int32Rect(obj.X1, obj.Y1, obj.X2 - obj.X1, obj.Y2 - obj.Y1);
+                CroppedBitmap cropped = new CroppedBitmap(obj.Image, rect);
+                Image img = new Image();
+                img.Source = cropped; // label filename below
+                wrapPanel_ObjectImages.Children.Add(img);
+            }
         }
     }
 }
