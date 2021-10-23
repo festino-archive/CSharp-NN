@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
 using System.Windows.Media.Imaging;
@@ -13,7 +14,7 @@ namespace Lab
 
         public event Action RecognisionFinished;
         public event Action ResultUpdated;
-        public Dictionary<string, List<ImageObject>> Result = new Dictionary<string, List<ImageObject>>();
+        public AsyncObservableCollection<ClassificationCategory> Result = new AsyncObservableCollection<ClassificationCategory>();
         public int ImageCount
         {
             get {
@@ -59,10 +60,22 @@ namespace Lab
                 image.Freeze();
                 foreach (DetectedObject obj in objects)
                 {
-                    if (!Result.ContainsKey(obj.Label))
-                        Result[obj.Label] = new List<ImageObject>();
+                    ObservableCollection<ImageObject> list = null;
+                    for (int i = 0; i < Result.Count; i++)
+                        if (Result[i].Name == obj.Label)
+                        {
+                            list = Result[i].FoundObjects;
+                            break;
+                        }
+                    if (list == null)
+                    {
+                        var cc = new ClassificationCategory(obj.Label);
+                        Result.Add(cc);
+                        list = cc.FoundObjects;
+                    }
+
                     ImageObject resObj = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
-                    Result[obj.Label].Add(resObj);
+                    list.Add(resObj);
                 }
                 ResultUpdated?.Invoke();
 

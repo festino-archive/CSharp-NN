@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 namespace Lab
@@ -22,6 +23,19 @@ namespace Lab
             Int32Rect rect = new Int32Rect(X1, Y1, X2 - X1, Y2 - Y1);
             CroppedImage = new CroppedBitmap(freezedImage, rect);
             CroppedImage.Freeze();
+        }
+    }
+
+    internal class ClassificationCategory
+    {
+        public string Name { get; private set; }
+        public ObservableCollection<ImageObject> FoundObjects;
+        public int Count { get => FoundObjects.Count; }
+
+        public ClassificationCategory(string name)
+        {
+            Name = name;
+            FoundObjects = new AsyncObservableCollection<ImageObject>();
         }
     }
 }

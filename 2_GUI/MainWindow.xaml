@@ -45,8 +45,8 @@
                             <Border BorderBrush="Black" BorderThickness="2">
                                 <!--   <Grid Width="{Binding ElementName=listBox_ObjectList, Path=ActualWidth}-10">   -->
                                 <Grid Width="150">
-                                    <TextBlock HorizontalAlignment="Left" Text="{Binding Path=Key}" />
-                                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Value.Count}" />
+                                    <TextBlock HorizontalAlignment="Left" Text="{Binding Path=Name}" />
+                                    <TextBlock HorizontalAlignment="Right" Text="{Binding Path=Count}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>

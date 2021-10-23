@@ -26,6 +26,7 @@ namespace Lab
 
             viewModel.RecognisionFinished += RecognisingButtonStopAsync;
             viewModel.ResultUpdated += UpdateResultAsync;
+            listBox_ObjectList.ItemsSource = viewModel.Result;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -61,11 +62,6 @@ namespace Lab
 
         private void UpdateResult()
         {
-            object selected = listBox_ObjectList.SelectedItem;
-            listBox_ObjectList.ItemsSource = null;
-            listBox_ObjectList.ItemsSource = viewModel.Result; // cause exceptions?
-            listBox_ObjectList.SelectedItem = selected;
-
             if (viewModel.ImageCount > 0)
                 progressBar_RecognisionProgress.Value = viewModel.Result.Count / (double)viewModel.ImageCount;
         }
@@ -82,7 +78,7 @@ namespace Lab
         {
             progressBar_RecognisionProgress.Value = 0.0;
             scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
-            listBox_ObjectList.ItemsSource = null;
+            //listBox_ObjectList.ItemsSource = null;
             listBox_ObjectList.SelectedIndex = -1;
             wrapPanel_ObjectImages.ItemsSource = null;
         }
@@ -127,10 +123,8 @@ namespace Lab
         {
             if (listBox_ObjectList.SelectedItem != null)
             {
-                wrapPanel_ObjectImages.ItemsSource = null; // TO DO use observable collection
-                wrapPanel_ObjectImages.ItemsSource = ((KeyValuePair<string, List<ImageObject>>)listBox_ObjectList.SelectedItem).Value;
-                if (listBox_ObjectList.SelectedItems.Count - e.AddedItems.Count + e.RemovedItems.Count > 0)
-                    scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
+                wrapPanel_ObjectImages.ItemsSource = ((ClassificationCategory)listBox_ObjectList.SelectedItem).FoundObjects;
+                scrollViewer_ObjectImages.ScrollToVerticalOffset(0);
             }
         }
     }
