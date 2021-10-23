@@ -71,8 +71,9 @@ namespace Lab
                     break;
             }
 
+            recogniser.Dispose();
             recogniser = null;
-            GC.Collect();
+            GC.Collect(); // force collecting long-term garbage
             RecognisionFinished?.Invoke();
         }
 
