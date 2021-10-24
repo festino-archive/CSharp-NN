@@ -86,7 +86,7 @@
     </ApplicationDefinition>
     <Compile Include="ClassificationCollection.cs" />
     <Compile Include="ImageObject.cs" />
-    <Compile Include="ViewModel.cs" />
+    <Compile Include="RecogniserWrapper.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

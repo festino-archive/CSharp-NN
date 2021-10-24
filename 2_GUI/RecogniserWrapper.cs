@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
 using System.Windows.Media.Imaging;
 
 namespace Lab
 {
-    class ViewModel
+    class RecogniserWrapper
     {
         readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
         ImageRecogniser recogniser;

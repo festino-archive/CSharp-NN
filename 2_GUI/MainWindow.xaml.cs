@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.IO;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,7 +17,7 @@ namespace Lab
         private enum RecognisionState { PROCESSING, STOPPING, READY }
         RecognisionState recognising = RecognisionState.READY;
 
-        internal readonly ViewModel viewModel = new ViewModel();
+        internal readonly RecogniserWrapper viewModel = new RecogniserWrapper();
         ClassificationCollection Result = new ClassificationCollection();
 
         public MainWindow()
@@ -28,8 +25,8 @@ namespace Lab
             InitializeComponent();
             // may be sorted using CollectionViewSource
 
-            viewModel.RecognisionFinished += RecognisingButtonStopAsync;
-            viewModel.ResultUpdated += UpdateResultSynchronised;
+            viewModel.RecognisionFinished += RecognisingButtonStopSync;
+            viewModel.ResultUpdated += UpdateResultSync;
             listBox_ObjectList.ItemsSource = Result;
             Result.ChildChanged += ReplaceWorkaround;
         }
@@ -60,7 +57,7 @@ namespace Lab
             UpdateRecogniseButton();
         }
 
-        private void RecognisingButtonStopAsync()
+        private void RecognisingButtonStopSync()
         {
             Dispatcher.BeginInvoke(new Action<RecognisionState>(SetRecognisingState), RecognisionState.READY);
         }
@@ -75,7 +72,7 @@ namespace Lab
             if (viewModel.ImageCount > 0)
                 progressBar_RecognisionProgress.Value = Result.ObjectCount / (double)viewModel.ImageCount;
         }
-        private void UpdateResultSynchronised(string[] labels, ImageObject[] imageResult)
+        private void UpdateResultSync(string[] labels, ImageObject[] imageResult)
         {
             Dispatcher.BeginInvoke(new Action<string[], ImageObject[]>(UpdateResult), labels, imageResult);
         }
@@ -119,12 +116,11 @@ namespace Lab
                 ResetDisplay();
                 Result.Clear();
                 string fileDir = textBox_ImagesDir.Text;
-                Thread thread = new Thread(() =>
+                Task.Run(() =>
                 {
                     viewModel.Recognise(fileDir);
                 }
                 );
-                thread.Start();
             }
             else
             {
