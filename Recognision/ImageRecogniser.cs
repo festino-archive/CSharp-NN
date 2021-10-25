@@ -16,8 +16,10 @@ using YoloPredictionEngine = Microsoft.ML.PredictionEngine<YOLOv4MLNet.DataStruc
 
 namespace Lab
 {
-    public class ImageRecogniser
+    public class ImageRecogniser : IDisposable
     {
+        private bool disposed = false;
+
         static readonly string[] classesNames = new string[] {
             "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light",
             "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
@@ -29,7 +31,7 @@ namespace Lab
             "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"
         };
         readonly int ThreadNum;
-        private ConcurrentStack<YoloPredictionEngine> PredictionEngines;
+        private BlockingCollection<YoloPredictionEngine> PredictionEngines;
 
         readonly string ModelPath;
         string FullModelPath;
@@ -57,7 +59,7 @@ namespace Lab
             ImagePath = fullPath;
             ModelPath = modelPath;
             ThreadNum = threadNum;
-            PredictionEngines = new ConcurrentStack<YoloPredictionEngine>();
+            PredictionEngines = new BlockingCollection<YoloPredictionEngine>();
             TokenSource = new CancellationTokenSource();
         }
 
@@ -75,10 +77,9 @@ namespace Lab
 
             var processImageBlock = new TransformBlock<string, RecognisionResult>(imagePath =>
             {
-                YoloPredictionEngine engine;
-                PredictionEngines.TryPop(out engine);
+                YoloPredictionEngine engine = PredictionEngines.Take();
                 var results = Predict(imagePath, engine);
-                PredictionEngines.Push(engine);
+                PredictionEngines.Add(engine);
                 List<DetectedObject> objects = new List<DetectedObject>();
                 foreach (var res in results)
                     objects.Add(new DetectedObject(res));
@@ -120,6 +121,14 @@ namespace Lab
             if (imageCount >= 0)
                 return;
 
+            FullImagePath = ImagePath.Trim();
+            if (FullImagePath.Length == 0 || FullImagePath.Contains(new string(Path.GetInvalidFileNameChars())))
+            {
+                Filenames = null;
+                imageCount = 0;
+                return;
+            }
+
             FullImagePath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ImagePath);
             Filenames = Directory.EnumerateFiles(FullImagePath, "*.*")
                 .Where(file => supportedExtensions.Any(x => file.EndsWith(x, StringComparison.OrdinalIgnoreCase)))
@@ -145,7 +154,7 @@ namespace Lab
             var ab = new ActionBlock<int>(async index =>
             {
                 var engine = mlContext.Model.CreatePredictionEngine<YoloV4BitmapData, YoloV4Prediction>(model);
-                PredictionEngines.Push(engine);
+                PredictionEngines.Add(engine);
             },
             new ExecutionDataflowBlockOptions
             {
@@ -189,6 +198,20 @@ namespace Lab
 
             // Fit on empty list to obtain input data schema
             return pipeline.Fit(mlContext.Data.LoadFromEnumerable(new List<YoloV4BitmapData>()));
+        }
+
+        public void Dispose()
+        {
+            if (!disposed)
+            {
+                // wait for all Prediction engines
+                for (int i = 0; i < ThreadNum; i++)
+                {
+                    var _ = PredictionEngines.Take();
+                }
+                disposed = true;
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

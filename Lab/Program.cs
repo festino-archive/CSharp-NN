@@ -10,7 +10,7 @@ namespace Lab
     // 2b => TPL Flow + progress bar
     class Program
     {
-        readonly static string ModelPath = "..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
+        readonly static string ModelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
 
         static async Task Main(string[] args)
         {
