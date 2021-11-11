@@ -40,8 +40,6 @@ namespace Lab
             list.Add(obj);
             //CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, (object)coll[index], (object)coll[index], index));
             ChildChanged?.Invoke();
-
-            ObjectCount++;
         }
 
         public ObservableCollection<ImageObject> Get(string category)
@@ -71,6 +69,16 @@ namespace Lab
                 coll[i].FoundObjects.Clear();
             coll.Clear();
             ObjectCount = 0;
+        }
+
+        public void CounterReset()
+        {
+            ObjectCount = 0;
+        }
+
+        public void CounterIncrement()
+        {
+            ObjectCount++;
         }
 
         public IEnumerator<ClassificationCategory> GetEnumerator()

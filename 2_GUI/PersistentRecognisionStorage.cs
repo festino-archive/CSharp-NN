@@ -24,6 +24,29 @@ namespace Lab
             db = new RecognisionStorageContext(false);
         }
 
+        public Task AddAsync(ImageObject obj) // TODO workaround System.Reflection.TargetInvocationException
+        {
+            return Task.Run(() => Add(obj));
+        }
+
+        public Task RemoveAsync(ImageObject obj)
+        {
+            return Task.Run(() => Remove(obj));
+        }
+
+        public Task LoadAllAsync(Action<ImageObject> callback, Action finished)
+        {
+            return Task.Run(() =>
+            {
+                int[] ids = db.Recognised
+                             .Select(x => x.Id)
+                             .ToArray();
+                for (int i = 0; i < ids.Length; i++)
+                    callback(Load(ids[i]));
+                finished?.Invoke();
+            });
+        }
+
         public void Add(ImageObject obj)
         {
             byte[] pixels = ToBytes(obj.CroppedImage);
@@ -62,19 +85,6 @@ namespace Lab
         public bool Contains(ImageObject obj)
         {
             return GetDuplicateId(obj) != null;
-        }
-
-        public int? GetDuplicateId(ImageObject obj)
-        {
-            byte[] pixels = ToBytes(obj.CroppedImage);
-            int duplicateId = db.Recognised
-                         .Where(d => d.X1 == obj.X1 && d.Y1 == obj.Y1 && d.X2 == obj.X2 && d.Y2 == obj.Y2)
-                         .Where(d => d.ObjectImage == pixels)
-                         .Select(d => d.Id)
-                         .FirstOrDefault();
-            if (duplicateId == default(int)) // check if enumeration goes from 0
-                return null;
-            return duplicateId;
         }
 
         public ImageObject[] LoadAll()
@@ -118,6 +128,19 @@ namespace Lab
             for (int i = 0; i < objects.Length; i++)
                 objects[i] = Load(ids[i]);
             return objects;
+        }
+
+        private int? GetDuplicateId(ImageObject obj)
+        {
+            byte[] pixels = ToBytes(obj.CroppedImage);
+            int duplicateId = db.Recognised
+                         .Where(d => d.X1 == obj.X1 && d.Y1 == obj.Y1 && d.X2 == obj.X2 && d.Y2 == obj.Y2)
+                         .Where(d => d.ObjectImage == pixels)
+                         .Select(d => d.Id)
+                         .FirstOrDefault();
+            if (duplicateId == default(int)) // check if enumeration goes from 0
+                return null;
+            return duplicateId;
         }
 
         private WriteableBitmap FromBytes(byte[] pixels, int width, int height)
