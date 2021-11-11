@@ -63,6 +63,7 @@ namespace Lab
                     DetectedObject obj = objects[i];
                     labels[i] = obj.Label;
                     imageResult[i] = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
+                    // TODO При обнаружении очередного объекта проверять его наличие в хранилище и добавлять только в случае отсутствия. 
                 }
                 ResultUpdated?.Invoke(labels, imageResult);
 

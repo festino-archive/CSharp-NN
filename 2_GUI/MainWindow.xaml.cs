@@ -34,6 +34,7 @@ namespace Lab
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DataContext = this;
+            // TODO Приложение при старте показывает содержимое хранилища. В приложении предусмотрена возможность удалить записанные ранее результаты. 
         }
 
         private void SetRecognisingState(RecognisionState isRecognising)
