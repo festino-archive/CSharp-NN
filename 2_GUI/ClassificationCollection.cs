@@ -3,12 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Threading.Tasks;
+using System.Windows.Threading;
 
 namespace Lab
 {
     class ClassificationCollection : IEnumerable<ClassificationCategory>, INotifyCollectionChanged
     {
+        private PersistentRecognisionStorage storage = new PersistentRecognisionStorage();
         private ObservableCollection<ClassificationCategory> coll = new ObservableCollection<ClassificationCategory>();
+        private Dispatcher dispatcher;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public event Action ChildChanged;
@@ -16,19 +20,38 @@ namespace Lab
         public int ObjectCount { get; private set; }
         public int Count { get => coll.Count; }
 
-        public ClassificationCollection()
+        public ClassificationCollection(Dispatcher dispatcher)
         {
             ObjectCount = 0;
             coll.CollectionChanged += OnCollectionChange;
+            this.dispatcher = dispatcher;
         }
 
-        public void Add(string category, ImageObject obj)
+        public Task LoadAllAsync(Action<double> callback, Action finished)
         {
-            int index = GetIndex(category);
+            return storage.LoadAllAsync((obj, percent) => {
+                    dispatcher.Invoke(() => AddToCollection(obj));
+                    callback(percent);
+                },
+                finished);
+        }
+
+        public void Add(ImageObject obj)
+        {
+            if (!storage.Contains(obj)) // TODO async (EntityFramework needs multiple contexts or some queue)
+            {
+                AddToCollection(obj);
+                storage.Add(obj);
+            }
+        }
+
+        private void AddToCollection(ImageObject obj)
+        {
+            int index = GetIndex(obj.Category);
             ObservableCollection<ImageObject> list;
             if (index < 0)
             {
-                var cc = new ClassificationCategory(category);
+                var cc = new ClassificationCategory(obj.Category);
                 index = coll.Count;
                 coll.Add(cc);
                 list = cc.FoundObjects;
@@ -68,6 +91,7 @@ namespace Lab
             for (int i = 0; i < coll.Count; i++)
                 coll[i].FoundObjects.Clear();
             coll.Clear();
+            storage.Clear();
             ObjectCount = 0;
         }
 

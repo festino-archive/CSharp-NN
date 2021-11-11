@@ -35,7 +35,7 @@
                     <RowDefinition Height="1*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Button Name="button_RecogniseButton" Content="Классифицировать" HorizontalAlignment="Center" VerticalAlignment="Top" Padding="5"
+                <Button Name="button_RecogniseButton" Content="Загрузка..." HorizontalAlignment="Center" VerticalAlignment="Top" Padding="5"
                         Click="button_RecogniseButton_Click" IsEnabled="False"/>
                 <ProgressBar Name="progressBar_RecognisionProgress" Grid.Row="1" Height="8" Margin="0 5 0 5" Maximum="1" Visibility="Hidden"/>
                 <TextBlock Grid.Row="2" Margin="3 5 3 5" HorizontalAlignment="Center">Найденные объекты</TextBlock>

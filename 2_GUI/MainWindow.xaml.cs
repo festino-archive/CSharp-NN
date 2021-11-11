@@ -14,13 +14,12 @@ namespace Lab
         private readonly string RecogniseButton_textToStart = "Классифицировать";
         private readonly string RecogniseButton_textToStop = "Прервать";
         private readonly string RecogniseButton_textStopping = "Прерывается...";
-        private enum RecognisionState { PROCESSING, STOPPING, READY }
-        RecognisionState recognising = RecognisionState.READY;
+        private enum RecognisionState { LOADING, PROCESSING, STOPPING, READY }
+        private RecognisionState recognising = RecognisionState.LOADING;
 
+        internal readonly ClassificationCollection mainCollection;
         internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
-        ClassificationCollection mainCollection = new ClassificationCollection();
 
-        private PersistentRecognisionStorage storage = new PersistentRecognisionStorage(); // TODO move unnecessary code to another class
 
         public MainWindow()
         {
@@ -28,6 +27,8 @@ namespace Lab
 
             recogniser.RecognisionFinished += RecognisingButtonStopSync;
             recogniser.ResultUpdated += UpdateResultSync;
+
+            mainCollection = new ClassificationCollection(Dispatcher);
             // may be sorted using CollectionViewSource
             listBox_ObjectList.ItemsSource = mainCollection;
             mainCollection.ChildChanged += ReplaceWorkaround;
@@ -36,8 +37,10 @@ namespace Lab
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DataContext = this;
-            storage.LoadAllAsync(
-                (obj) => Dispatcher.Invoke(() => mainCollection.Add(obj.Category, obj)),
+
+            progressBar_RecognisionProgress.Visibility = Visibility.Visible;
+            mainCollection.LoadAllAsync(
+                (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent),
                 () => Dispatcher.Invoke(Storage_Loaded)
             );
         }
@@ -45,6 +48,8 @@ namespace Lab
         private void Storage_Loaded()
         {
             button_ClearButton.IsEnabled = true;
+            progressBar_RecognisionProgress.Visibility = Visibility.Hidden;
+            SetRecognisingState(RecognisionState.READY);
         }
 
         private void SetRecognisingState(RecognisionState isRecognising)
@@ -76,13 +81,7 @@ namespace Lab
         private void UpdateResult(string[] labels, ImageObject[] imageResult)
         {
             for (int i = 0; i < labels.Length; i++)
-            {
-                if (!storage.Contains(imageResult[i])) // TODO async (EntityFramework needs multiple contexts or some queue)
-                {
-                    mainCollection.Add(labels[i], imageResult[i]);
-                    storage.Add(imageResult[i]);
-                }
-            }
+                mainCollection.Add(imageResult[i]);
 
             mainCollection.CounterIncrement();
             if (recogniser.ImageCount > 0)
@@ -145,7 +144,6 @@ namespace Lab
 
         private void button_ClearButton_Click(object sender, RoutedEventArgs e)
         {
-            storage.Clear();
             ResetDisplay();
             mainCollection.Clear();
         }

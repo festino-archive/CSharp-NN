@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -34,7 +32,7 @@ namespace Lab
             return Task.Run(() => Remove(obj));
         }
 
-        public Task LoadAllAsync(Action<ImageObject> callback, Action finished)
+        public Task LoadAllAsync(Action<ImageObject, double> callback, Action finished)
         {
             return Task.Run(() =>
             {
@@ -42,7 +40,10 @@ namespace Lab
                              .Select(x => x.Id)
                              .ToArray();
                 for (int i = 0; i < ids.Length; i++)
-                    callback(Load(ids[i]));
+                {
+                    double percent = (i + 1) / (double)ids.Length;
+                    callback(Load(ids[i]), percent);
+                }
                 finished?.Invoke();
             });
         }
