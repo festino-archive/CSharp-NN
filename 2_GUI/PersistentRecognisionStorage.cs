@@ -32,9 +32,9 @@ namespace Lab
             return Task.Run(() => Remove(obj));
         }
 
-        public Task LoadAllAsync(Action<ImageObject, double> callback, Action finished)
+        public async Task LoadAllAsync(Action<ImageObject, double> callback, Action finished)
         {
-            return Task.Run(() =>
+            await Task.Run(() =>
             {
                 int[] ids = db.Recognised
                              .Select(x => x.Id)

@@ -27,9 +27,9 @@ namespace Lab
             this.dispatcher = dispatcher;
         }
 
-        public Task LoadAllAsync(Action<double> callback, Action finished)
+        public async Task LoadAllAsync(Action<double> callback, Action finished)
         {
-            return storage.LoadAllAsync((obj, percent) => {
+            await storage.LoadAllAsync((obj, percent) => {
                     dispatcher.Invoke(() => AddToCollection(obj));
                     callback(percent);
                 },

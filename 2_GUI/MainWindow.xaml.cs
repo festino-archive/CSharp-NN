@@ -20,7 +20,6 @@ namespace Lab
         internal readonly ClassificationCollection mainCollection;
         internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
 
-
         public MainWindow()
         {
             InitializeComponent();
@@ -39,10 +38,11 @@ namespace Lab
             DataContext = this;
 
             progressBar_RecognisionProgress.Visibility = Visibility.Visible;
-            mainCollection.LoadAllAsync(
-                (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent),
-                () => Dispatcher.Invoke(Storage_Loaded)
-            );
+            Task.Run(
+                () => mainCollection.LoadAllAsync(
+                    (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent),
+                    () => Dispatcher.Invoke(Storage_Loaded)
+                ));
         }
 
         private void Storage_Loaded()
