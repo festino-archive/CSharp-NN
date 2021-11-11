@@ -17,16 +17,19 @@ namespace Lab
         private enum RecognisionState { PROCESSING, STOPPING, READY }
         RecognisionState recognising = RecognisionState.READY;
 
-        internal readonly RecogniserWrapper viewModel = new RecogniserWrapper();
+        internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
         ClassificationCollection Result = new ClassificationCollection();
+
+        private PersistentRecognisionStorage storage = new PersistentRecognisionStorage(); // TODO move unnecessary code to another class
+
 
         public MainWindow()
         {
             InitializeComponent();
-            // may be sorted using CollectionViewSource
 
-            viewModel.RecognisionFinished += RecognisingButtonStopSync;
-            viewModel.ResultUpdated += UpdateResultSync;
+            recogniser.RecognisionFinished += RecognisingButtonStopSync;
+            recogniser.ResultUpdated += UpdateResultSync;
+            // may be sorted using CollectionViewSource
             listBox_ObjectList.ItemsSource = Result;
             Result.ChildChanged += ReplaceWorkaround;
         }
@@ -34,7 +37,8 @@ namespace Lab
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DataContext = this;
-            // TODO Приложение при старте показывает содержимое хранилища. В приложении предусмотрена возможность удалить записанные ранее результаты. 
+            foreach (ImageObject obj in storage.LoadAll()) // TODO async
+                Result.Add(obj.Category, obj);
         }
 
         private void SetRecognisingState(RecognisionState isRecognising)
@@ -67,11 +71,15 @@ namespace Lab
         {
             for (int i = 0; i < labels.Length; i++)
             {
-                Result.Add(labels[i], imageResult[i]);
+                if (!storage.Contains(imageResult[i]))
+                {
+                    Result.Add(labels[i], imageResult[i]); // TODO async
+                    storage.Add(imageResult[i]);
+                }
             }
 
-            if (viewModel.ImageCount > 0)
-                progressBar_RecognisionProgress.Value = Result.ObjectCount / (double)viewModel.ImageCount;
+            if (recogniser.ImageCount > 0)
+                progressBar_RecognisionProgress.Value = Result.ObjectCount / (double)recogniser.ImageCount;
         }
         private void UpdateResultSync(string[] labels, ImageObject[] imageResult)
         {
@@ -114,20 +122,25 @@ namespace Lab
             if (recognising == RecognisionState.READY)
             {
                 SetRecognisingState(RecognisionState.PROCESSING);
-                ResetDisplay();
-                Result.Clear();
                 string fileDir = textBox_ImagesDir.Text;
                 Task.Run(() =>
                 {
-                    viewModel.Recognise(fileDir);
+                    recogniser.Recognise(fileDir);
                 }
                 );
             }
             else
             {
                 SetRecognisingState(RecognisionState.STOPPING);
-                viewModel.StopRecognision();
+                recogniser.StopRecognision();
             }
+        }
+
+        private void button_ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            storage.Clear();
+            ResetDisplay();
+            Result.Clear();
         }
 
         private void textBox_ImagesDir_TextChanged(object sender, TextChangedEventArgs e)

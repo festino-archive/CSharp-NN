@@ -37,18 +37,15 @@ namespace Lab
                 ObjectImage = pixels
             };
             db.Recognised.Add(data);
+            db.SaveChanges();
         }
 
         private ImageObject Load(int id)
         {
             RecognisionData data = db.Recognised.Where(d => d.Id == id).First();
-            byte[] pixels = data.ObjectImage;
             int width = data.X2 - data.X1;
             int height = data.Y2 - data.Y1;
-            WriteableBitmap bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
-
-            bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * ((bitmap.Format.BitsPerPixel + 7) / 8), 0);
-
+            WriteableBitmap bitmap = FromBytes(data.ObjectImage, width, height);
             return new ImageObject(data.Name, data.Category, bitmap, 0, 0, width, height);
         }
 
@@ -56,7 +53,10 @@ namespace Lab
         {
             int? id = GetDuplicateId(obj);
             if (id != null)
+            {
                 db.Recognised.Remove(db.Recognised.Where(d => d.Id == id.Value).First());
+                db.SaveChanges();
+            }
         }
 
         public bool Contains(ImageObject obj)
@@ -67,11 +67,13 @@ namespace Lab
         public int? GetDuplicateId(ImageObject obj)
         {
             byte[] pixels = ToBytes(obj.CroppedImage);
-            int? duplicateId = db.Recognised
+            int duplicateId = db.Recognised
                          .Where(d => d.X1 == obj.X1 && d.Y1 == obj.Y1 && d.X2 == obj.X2 && d.Y2 == obj.Y2)
                          .Where(d => d.ObjectImage == pixels)
                          .Select(d => d.Id)
-                         .First();
+                         .FirstOrDefault();
+            if (duplicateId == default(int)) // check if enumeration goes from 0
+                return null;
             return duplicateId;
         }
 
@@ -118,11 +120,21 @@ namespace Lab
             return objects;
         }
 
+        private WriteableBitmap FromBytes(byte[] pixels, int width, int height)
+        {
+            WriteableBitmap bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+            int stride = width * ((bitmap.Format.BitsPerPixel + 7) / 8);
+            bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+            return bitmap;
+        }
+
         private byte[] ToBytes(CroppedBitmap cropped)
         {
             BitmapSource source = cropped.Source;
-            int stride = source.PixelWidth * ((source.Format.BitsPerPixel + 7) / 8);
-            byte[] pixels = new byte[source.PixelHeight * stride];
+            int width = cropped.SourceRect.Width;
+            int height = cropped.SourceRect.Height;
+            int stride = width * ((source.Format.BitsPerPixel + 7) / 8);
+            byte[] pixels = new byte[height * stride];
             source.CopyPixels(cropped.SourceRect, pixels, stride, 0);
             return pixels;
         }

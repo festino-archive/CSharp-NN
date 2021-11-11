@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.IO;
 
@@ -24,15 +26,24 @@ namespace Lab
 
         public RecognisionStorageContext(bool tryLoad)
         {
-            var folder = Environment.SpecialFolder.LocalApplicationData;
-            var path = Environment.GetFolderPath(folder);
-            DbPath = $"{path}{Path.DirectorySeparatorChar}recognised.db";
+            var sep = Path.DirectorySeparatorChar;
+            var path = "." + sep;
+            DbPath = $"{path}{sep}recognised.db";
             if (!tryLoad)
                 if (File.Exists(DbPath))
                     File.Delete(DbPath);
+            if (!File.Exists(DbPath))
+            {
+                Database.Migrate();
+                RelationalDatabaseCreator databaseCreator =
+                    (RelationalDatabaseCreator)Database.GetService<IDatabaseCreator>();
+                databaseCreator.CreateTables();
+            }
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-             => options.UseSqlite($"Data Source={DbPath}");
+        {
+            options.UseSqlite($"Data Source={DbPath}");
+        }
     }
 }
