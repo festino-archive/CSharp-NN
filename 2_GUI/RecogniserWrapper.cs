@@ -8,8 +8,8 @@ namespace Lab
 {
     class RecogniserWrapper
     {
-        readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
-        ImageRecogniser recogniser;
+        private readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
+        private ImageRecogniser recogniser;
 
         public event Action RecognisionFinished;
         public event Action<string[], ImageObject[]> ResultUpdated;
@@ -62,7 +62,7 @@ namespace Lab
                 {
                     DetectedObject obj = objects[i];
                     labels[i] = obj.Label;
-                    imageResult[i] = new ImageObject(res.Filename, image, obj.X1, obj.Y1, obj.X2, obj.Y2);
+                    imageResult[i] = new ImageObject(res.Filename, labels[i], image, obj.X1, obj.Y1, obj.X2, obj.Y2);
                 }
                 ResultUpdated?.Invoke(labels, imageResult);
 

@@ -14,26 +14,44 @@ namespace Lab
         private readonly string RecogniseButton_textToStart = "Классифицировать";
         private readonly string RecogniseButton_textToStop = "Прервать";
         private readonly string RecogniseButton_textStopping = "Прерывается...";
-        private enum RecognisionState { PROCESSING, STOPPING, READY }
-        RecognisionState recognising = RecognisionState.READY;
+        private enum RecognisionState { LOADING, PROCESSING, STOPPING, READY }
+        private RecognisionState recognising = RecognisionState.LOADING;
 
-        internal readonly RecogniserWrapper viewModel = new RecogniserWrapper();
-        ClassificationCollection Result = new ClassificationCollection();
+        internal readonly ClassificationCollection mainCollection;
+        internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
 
         public MainWindow()
         {
             InitializeComponent();
-            // may be sorted using CollectionViewSource
 
-            viewModel.RecognisionFinished += RecognisingButtonStopSync;
-            viewModel.ResultUpdated += UpdateResultSync;
-            listBox_ObjectList.ItemsSource = Result;
-            Result.ChildChanged += ReplaceWorkaround;
+            recogniser.RecognisionFinished += RecognisingButtonStopSync;
+            recogniser.ResultUpdated += UpdateResultSync;
+
+            mainCollection = new ClassificationCollection(Dispatcher);
+            // may be sorted using CollectionViewSource
+            listBox_ObjectList.ItemsSource = mainCollection;
+            mainCollection.ChildChanged += ReplaceWorkaround;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             DataContext = this;
+
+            progressBar_RecognisionProgress.Visibility = Visibility.Visible;
+            Task.Run(async () =>
+            {
+                await mainCollection.LoadAllAsync(
+                    (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent)
+                );
+                Dispatcher.Invoke(Storage_Loaded);
+            });
+        }
+
+        private void Storage_Loaded()
+        {
+            button_ClearButton.IsEnabled = true;
+            progressBar_RecognisionProgress.Visibility = Visibility.Hidden;
+            SetRecognisingState(RecognisionState.READY);
         }
 
         private void SetRecognisingState(RecognisionState isRecognising)
@@ -65,12 +83,11 @@ namespace Lab
         private void UpdateResult(string[] labels, ImageObject[] imageResult)
         {
             for (int i = 0; i < labels.Length; i++)
-            {
-                Result.Add(labels[i], imageResult[i]);
-            }
+                mainCollection.Add(imageResult[i]);
 
-            if (viewModel.ImageCount > 0)
-                progressBar_RecognisionProgress.Value = Result.ObjectCount / (double)viewModel.ImageCount;
+            mainCollection.CounterIncrement();
+            if (recogniser.ImageCount > 0)
+                progressBar_RecognisionProgress.Value = mainCollection.ObjectCount / (double)recogniser.ImageCount;
         }
         private void UpdateResultSync(string[] labels, ImageObject[] imageResult)
         {
@@ -113,20 +130,24 @@ namespace Lab
             if (recognising == RecognisionState.READY)
             {
                 SetRecognisingState(RecognisionState.PROCESSING);
-                ResetDisplay();
-                Result.Clear();
                 string fileDir = textBox_ImagesDir.Text;
-                Task.Run(() =>
-                {
-                    viewModel.Recognise(fileDir);
-                }
+                mainCollection.CounterReset();
+                Task.Run(() => {
+                        recogniser.Recognise(fileDir);
+                    }
                 );
             }
             else
             {
                 SetRecognisingState(RecognisionState.STOPPING);
-                viewModel.StopRecognision();
+                recogniser.StopRecognision();
             }
+        }
+
+        private void button_ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ResetDisplay();
+            mainCollection.Clear();
         }
 
         private void textBox_ImagesDir_TextChanged(object sender, TextChangedEventArgs e)
