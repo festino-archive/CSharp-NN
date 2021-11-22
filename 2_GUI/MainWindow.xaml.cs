@@ -38,11 +38,13 @@ namespace Lab
             DataContext = this;
 
             progressBar_RecognisionProgress.Visibility = Visibility.Visible;
-            Task.Run(
-                () => mainCollection.LoadAllAsync(
-                    (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent),
-                    () => Dispatcher.Invoke(Storage_Loaded)
-                ));
+            Task.Run(async () =>
+            {
+                await mainCollection.LoadAllAsync(
+                    (percent) => Dispatcher.Invoke(() => progressBar_RecognisionProgress.Value = percent)
+                );
+                Dispatcher.Invoke(Storage_Loaded);
+            });
         }
 
         private void Storage_Loaded()

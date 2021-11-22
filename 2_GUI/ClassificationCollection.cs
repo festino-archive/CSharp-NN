@@ -27,13 +27,12 @@ namespace Lab
             this.dispatcher = dispatcher;
         }
 
-        public async Task LoadAllAsync(Action<double> callback, Action finished)
+        public async Task LoadAllAsync(Action<double> callback)
         {
             await storage.LoadAllAsync((obj, percent) => {
                     dispatcher.Invoke(() => AddToCollection(obj));
                     callback(percent);
-                },
-                finished);
+                });
         }
 
         public void Add(ImageObject obj)

@@ -32,7 +32,7 @@ namespace Lab
             return Task.Run(() => Remove(obj));
         }
 
-        public async Task LoadAllAsync(Action<ImageObject, double> callback, Action finished)
+        public async Task LoadAllAsync(Action<ImageObject, double> callback)
         {
             await Task.Run(() =>
             {
@@ -44,7 +44,6 @@ namespace Lab
                     double percent = (i + 1) / (double)ids.Length;
                     callback(Load(ids[i]), percent);
                 }
-                finished?.Invoke();
             });
         }
 
