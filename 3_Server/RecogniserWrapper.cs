@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks.Dataflow;
-using System.Windows.Media.Imaging;
 
 namespace Lab
 {
@@ -11,8 +10,6 @@ namespace Lab
         private readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
         private ImageRecogniser recogniser;
 
-        public event Action RecognisionFinished;
-        public event Action<string[], ImageObject[]> ResultUpdated;
         public int ImageCount
         {
             get {
@@ -28,7 +25,6 @@ namespace Lab
             if (recogniser.ImageCount == 0)
             {
                 recogniser = null;
-                RecognisionFinished?.Invoke();
                 return;
             }
 
@@ -53,18 +49,19 @@ namespace Lab
 
                 List<DetectedObject> objects = res.Objects;
                 string[] labels = new string[objects.Count];
-                ImageObject[] imageResult = new ImageObject[objects.Count];
+                RecognisionData[] imageResult = new RecognisionData[objects.Count];
 
                 var uri = new Uri(Path.Combine(imageDir, res.Filename));
-                BitmapImage image = new BitmapImage(uri);
-                image.Freeze();
+                byte[] croppedImage = null; // TODO
                 for (int i = 0; i < imageResult.Length; i++)
                 {
                     DetectedObject obj = objects[i];
                     labels[i] = obj.Label;
-                    imageResult[i] = new ImageObject(res.Filename, labels[i], image, obj.X1, obj.Y1, obj.X2, obj.Y2);
+                    imageResult[i] = new RecognisionData() {
+                        Name = res.Filename, Category = labels[i], ObjectImage = croppedImage, X1 = obj.X1, Y1 = obj.Y1, X2 = obj.X2, Y2 = obj.Y2
+                    };
                 }
-                ResultUpdated?.Invoke(labels, imageResult);
+                // send obj
 
                 count++;
                 if (count == recogniser.ImageCount)
@@ -74,7 +71,6 @@ namespace Lab
             recogniser.Dispose();
             recogniser = null;
             GC.Collect(); // force collecting long-term garbage
-            RecognisionFinished?.Invoke();
         }
 
         public void StopRecognision()

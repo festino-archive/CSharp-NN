@@ -10,12 +10,15 @@ namespace Lab
 {
     class ClassificationCollection : IEnumerable<ClassificationCategory>, INotifyCollectionChanged
     {
-        private PersistentRecognisionStorage storage = new PersistentRecognisionStorage();
+        private IRecognisionService service = new RemoteRecognisionService();
         private ObservableCollection<ClassificationCategory> coll = new ObservableCollection<ClassificationCategory>();
         private Dispatcher dispatcher;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public event Action ChildChanged;
+
+        public event Action RecognisionFinished;
+        public event Action<string[], ImageObject[]> ResultUpdated;
 
         public int ObjectCount { get; private set; }
         public int Count { get => coll.Count; }
@@ -25,11 +28,14 @@ namespace Lab
             ObjectCount = 0;
             coll.CollectionChanged += OnCollectionChange;
             this.dispatcher = dispatcher;
+
+            //ResultUpdated?.Invoke(labels, imageResult);
+            //RecognisionFinished?.Invoke();
         }
 
         public async Task LoadAllAsync(Action<double> callback)
         {
-            await storage.LoadAllAsync((obj, percent) => {
+            await service.LoadAllAsync((obj, percent) => {
                     dispatcher.Invoke(() => AddToCollection(obj));
                     callback(percent);
                 });
@@ -37,10 +43,10 @@ namespace Lab
 
         public void Add(ImageObject obj)
         {
-            if (!storage.Contains(obj)) // TODO async (EntityFramework needs multiple contexts or some queue)
+            if (!service.Contains(obj)) // TODO async (EntityFramework needs multiple contexts or some queue)
             {
                 AddToCollection(obj);
-                storage.Add(obj);
+                service.Add(obj);
             }
         }
 
@@ -90,7 +96,7 @@ namespace Lab
             for (int i = 0; i < coll.Count; i++)
                 coll[i].FoundObjects.Clear();
             coll.Clear();
-            storage.Clear();
+            service.Clear();
             ObjectCount = 0;
         }
 

@@ -18,14 +18,22 @@ namespace Lab
         private RecognisionState recognising = RecognisionState.LOADING;
 
         internal readonly ClassificationCollection mainCollection;
-        internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
 
         public MainWindow()
         {
+            /*
+        Приложение WPF обращается для выполнения распознавания и хранения результатов к сервису из п.1. 
+
+        Вся функциональность приложения из задания 3 сохранена, но работа идёт с сервисом, а не с базой данных. 
+
+        Приложение корректно обрабатывает ситуацию недоступности сервиса 
+
+        Обращение к сервису происходит асинхронно 
+             */
             InitializeComponent();
 
-            recogniser.RecognisionFinished += RecognisingButtonStopSync;
-            recogniser.ResultUpdated += UpdateResultSync;
+            mainCollection.RecognisionFinished += RecognisingButtonStopSync;
+            mainCollection.ResultUpdated += UpdateResultSync;
 
             mainCollection = new ClassificationCollection(Dispatcher);
             // may be sorted using CollectionViewSource
