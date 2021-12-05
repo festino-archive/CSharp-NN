@@ -1,0 +1,129 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\2_GUI\\2_GUI.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\2_GUI\\2_GUI.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\2_GUI\\2_GUI.csproj",
+        "projectName": "2_GUI",
+        "projectPath": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\2_GUI\\2_GUI.csproj",
+        "packagesPath": "C:\\Users\\angry\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\2_GUI\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\angry\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0-windows7.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0-windows7.0": {
+            "targetAlias": "net6.0-windows",
+            "projectReferences": {
+              "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\3_ContractStructures.csproj": {
+                "projectPath": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\3_ContractStructures.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0-windows7.0": {
+          "targetAlias": "net6.0-windows",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            },
+            "Microsoft.WindowsDesktop.App.WPF": {
+              "privateAssets": "none"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\3_ContractStructures.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\3_ContractStructures.csproj",
+        "projectName": "3_ContractStructures",
+        "projectPath": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\3_ContractStructures.csproj",
+        "packagesPath": "C:\\Users\\angry\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\angry\\source\\repos\\sergey-berezin\\402_velichkin\\3_ContractStructures\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\angry\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net6.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net6.0": {
+            "targetAlias": "net6.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

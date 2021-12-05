@@ -12,7 +12,7 @@ namespace Lab
         bool Contains(RecognisionData obj);
         void Clear();
         RecognisionData[] LoadAll();
-        RecognisionData[] LoadAllAsync(Action<RecognisionData, double> callback);
+        Task LoadAllAsync(Action<RecognisionData, double> callback);
         CategoryInfo[] LoadCategories();
         RecognisionData[] LoadCategory(string category);
     }
