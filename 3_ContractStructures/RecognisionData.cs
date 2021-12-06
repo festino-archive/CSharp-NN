@@ -1,4 +1,4 @@
-﻿namespace Lab
+﻿namespace Lab.Contract
 {
     public class RecognisionData
     {

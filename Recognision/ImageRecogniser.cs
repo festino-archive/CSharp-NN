@@ -20,6 +20,7 @@ namespace Recognision
     public class ImageRecogniser : IDisposable
     {
         private bool disposed = false;
+        private bool processing = false;
 
         static readonly string[] classesNames = new string[] {
             "person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat", "traffic light",
@@ -33,28 +34,71 @@ namespace Recognision
         };
 
         readonly int ThreadNum;
-        private BlockingCollection<YoloPredictionEngine> PredictionEngines;
-
         readonly string ModelPath;
-        string FullModelPath;
+        readonly string FullModelPath;
 
+        private BlockingCollection<IRecognisionTask> RecognisionTasks;
+        private BlockingCollection<YoloPredictionEngine> PredictionEngines;
         readonly CancellationTokenSource TokenSource;
         public CancellationToken Token { get => TokenSource.Token; }
 
-        public ImageRecogniser(string modelPath, int threadNum = 2)
+        public ImageRecogniser(string modelPath, int threadNum = 0)
         {
+            if (threadNum <= 0)
+            {
+                threadNum = Environment.ProcessorCount;
+            }
             ModelPath = modelPath;
+            FullModelPath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ModelPath);
+            //Console.WriteLine("Using model: " + FullModelPath);
             ThreadNum = threadNum;
+            RecognisionTasks = new BlockingCollection<IRecognisionTask>();
             PredictionEngines = new BlockingCollection<YoloPredictionEngine>();
             TokenSource = new CancellationTokenSource();
+            InitPredictionEngines();
         }
 
         public async Task RecogniseAsync(string[]? filenames, ITargetBlock<RecognisionResult> outputBlock)
         {
-            FullModelPath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ModelPath);
-            //Console.WriteLine("Using model: " + FullModelPath);
-            await InitPredictionEngines();
+            RecognisionTasks.Add(new FilesRecognisionTask(filenames, outputBlock));
+            TryRecogniseNext();
+        }
 
+        public async Task RecogniseAsync(string name, Bitmap bitmap, ITargetBlock<RecognisionResult> outputBlock)
+        {
+            RecognisionTasks.Add(new BitmapRecognisionTask(name, bitmap, outputBlock));
+            TryRecogniseNext();
+        }
+
+        public void TryRecogniseNext()
+        {
+            IRecognisionTask? task = null;
+            lock (RecognisionTasks)
+            {
+                if (!processing)
+                {
+                    RecognisionTasks.TryTake(out task);
+                    if (task != null)
+                        processing = true;
+                }
+            }
+            if (task != null)
+            {
+                if (task is FilesRecognisionTask)
+                {
+                    FilesRecognisionTask filesTask = task as FilesRecognisionTask;
+                    RecogniseFilesAsync(filesTask.Filenames, task.OutputBlock);
+                }
+                else if (task is BitmapRecognisionTask)
+                {
+                    BitmapRecognisionTask bitmapTask = task as BitmapRecognisionTask;
+                    RecogniseBitmapAsync(bitmapTask.Name, bitmapTask.Bitmap, task.OutputBlock);
+                }
+            }
+        }
+
+        private async Task RecogniseFilesAsync(string[]? filenames, ITargetBlock<RecognisionResult> outputBlock)
+        {
             // output - list of files: file name + its objects: class name + bounding box
             ParallelOptions options = new ParallelOptions();
             options.CancellationToken = Token;
@@ -95,7 +139,30 @@ namespace Recognision
             counterBlock.LinkTo(outputBlock);
             Parallel.For(0, imageCount, options, fileNum => processImageBlock.Post(filenames[fileNum]));
 
-            await Task.WhenAll(processImageBlock.Completion);
+            await processImageBlock.Completion;
+
+            processing = false;
+            TryRecogniseNext();
+        }
+
+        private async Task RecogniseBitmapAsync(string name, Bitmap bitmap, ITargetBlock<RecognisionResult> outputBlock)
+        {
+            YoloPredictionEngine engine = PredictionEngines.Take(Token);
+            if (Token.IsCancellationRequested)
+            {
+                return;
+            }
+            var results = Predict(bitmap, engine);
+            PredictionEngines.Add(engine);
+            List<DetectedObject> objects = new List<DetectedObject>();
+            foreach (var res in results)
+                objects.Add(new DetectedObject(res));
+
+            RecognisionResult result = new RecognisionResult(name, objects);
+            outputBlock.Post(result);
+
+            processing = false;
+            TryRecogniseNext();
         }
 
         public void Stop()
