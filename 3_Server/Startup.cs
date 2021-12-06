@@ -26,6 +26,7 @@ namespace Lab
             services.AddControllers();
             //services.AddSwaggerDocument();
             services.AddSingleton<IRecognisionStorage>(new PersistentRecognisionStorage());
+            services.AddSingleton<IRecogniser>(new RecogniserWrapper());
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

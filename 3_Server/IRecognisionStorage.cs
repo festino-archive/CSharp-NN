@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lab.Contract;
+using System;
 using System.Threading.Tasks;
 
 namespace Lab
@@ -10,9 +11,9 @@ namespace Lab
         Task AddAsync(RecognisionData obj);
         Task RemoveAsync(RecognisionData obj);
         bool Contains(RecognisionData obj);
+        RecognisionData? Load(int id);
         void Clear();
-        RecognisionData[] LoadAll();
-        Task LoadAllAsync(Action<RecognisionData, double> callback);
+        int[] LoadIds();
         CategoryInfo[] LoadCategories();
         RecognisionData[] LoadCategory(string category);
     }

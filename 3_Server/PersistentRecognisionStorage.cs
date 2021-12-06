@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Lab.Contract;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -50,7 +51,7 @@ namespace Lab
             db.SaveChanges();
         }
 
-        private RecognisionData Load(int id)
+        public RecognisionData? Load(int id)
         {
             return db.Recognised.Where(d => d.Id == id).First();
         }
@@ -70,12 +71,17 @@ namespace Lab
             return GetDuplicateId(obj) != null;
         }
 
-        public RecognisionData[] LoadAll()
+        public int[] LoadIds()
         {
             int[] filteredIds = db.Recognised
                          .Select(x => x.Id)
                          .ToArray();
-            return LoadIds(filteredIds);
+            return filteredIds;
+        }
+
+        public RecognisionData[] LoadAll()
+        {
+            return LoadByIds(LoadIds());
         }
 
         public RecognisionData[] LoadCategory(string category)
@@ -84,7 +90,7 @@ namespace Lab
                          .Where(d => d.Category == category)
                          .Select(x => x.Id)
                          .ToArray();
-            return LoadIds(filteredIds);
+            return LoadByIds(filteredIds);
         }
 
         public CategoryInfo[] LoadCategories()
@@ -105,7 +111,7 @@ namespace Lab
             return res;
         }
 
-        private RecognisionData[] LoadIds(int[] ids)
+        private RecognisionData[] LoadByIds(int[] ids)
         {
             RecognisionData[] objects = new RecognisionData[ids.Length];
             for (int i = 0; i < objects.Length; i++)
