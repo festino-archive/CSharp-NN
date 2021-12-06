@@ -7,15 +7,13 @@ using System.Windows.Media.Imaging;
 
 namespace Lab
 {
-    class RemoteRecognisionService : IRecognisionService
+    class PersistentRecognisionStorage : IRecognisionStorage
     {
         private RecognisionStorageContext db;
-        internal readonly RecogniserWrapper recogniser = new RecogniserWrapper();
 
         public PersistentRecognisionStorage()
         {
             db = new RecognisionStorageContext(true);
-
         }
 
         public void Clear()
@@ -24,7 +22,7 @@ namespace Lab
             db = new RecognisionStorageContext(false);
         }
 
-        public Task AddAsync(ImageObject obj)
+        public Task AddAsync(ImageObject obj) // TODO workaround System.Reflection.TargetInvocationException
         {
             return Task.Run(() => Add(obj));
         }
@@ -106,7 +104,7 @@ namespace Lab
             return LoadIds(filteredIds);
         }
 
-        public CategoryInfo[] LoadCategories()
+        public Tuple<string, int>[] LoadCategories()
         {
             var categoryNames = db.Recognised
                          .Select(d => d.Category)

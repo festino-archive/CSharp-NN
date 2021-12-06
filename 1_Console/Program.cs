@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Recognision;
+using Recognision.DataStructures;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -42,13 +44,16 @@ namespace Lab
             {
                 PrintHelp();
                 Console.WriteLine($"Please enter image directory path: ");
-                path = Console.ReadLine();
+                string? p = Console.ReadLine();
+                if (p == null)
+                    return;
+                path = p;
             }
             if (modelPath == "")
                 modelPath = ModelPath;
             Console.WriteLine($"Using path \"{path}\"...");
 
-            ImageRecogniser recogniser = new ImageRecogniser(path, modelPath, Environment.ProcessorCount);
+            ImageRecogniser recogniser = new ImageRecogniser(modelPath, Environment.ProcessorCount);
 
             CancellationTokenSource inputToken = new CancellationTokenSource();
             Task.Factory.StartNew(() =>
@@ -66,7 +71,9 @@ namespace Lab
                 CancellationToken = recogniser.Token
             });
 
-            recogniser.RecogniseAsync(bufferBlock);
+            string[]? filenames = RecogniserUtils.TryLoadFiles(path);
+            int imageCount = filenames == null ? 0 : filenames.Length;
+            recogniser.RecogniseAsync(filenames, bufferBlock);
 
             progress.Write(0.0, "");
             while (true)
@@ -95,9 +102,7 @@ namespace Lab
                 string info = "";
                 foreach (var keyval in currentResults)
                     info = info + keyval.Key + ": " + keyval.Value + "\n";
-                progress.Write(fullResult.Count / (double)recogniser.ImageCount, info);
-                if (fullResult.Count == recogniser.ImageCount)
-                    break;
+                progress.Write(fullResult.Count / (double)imageCount, info);
             }
 
             inputToken.Cancel();

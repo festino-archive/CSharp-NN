@@ -10,15 +10,12 @@ namespace Lab
 {
     class ClassificationCollection : IEnumerable<ClassificationCategory>, INotifyCollectionChanged
     {
-        private IRecognisionService service = new RemoteRecognisionService();
+        private PersistentRecognisionStorage storage = new PersistentRecognisionStorage();
         private ObservableCollection<ClassificationCategory> coll = new ObservableCollection<ClassificationCategory>();
         private Dispatcher dispatcher;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
         public event Action ChildChanged;
-
-        public event Action RecognisionFinished;
-        public event Action<string[], ImageObject[]> ResultUpdated;
 
         public int ObjectCount { get; private set; }
         public int Count { get => coll.Count; }
@@ -28,14 +25,11 @@ namespace Lab
             ObjectCount = 0;
             coll.CollectionChanged += OnCollectionChange;
             this.dispatcher = dispatcher;
-
-            //ResultUpdated?.Invoke(labels, imageResult);
-            //RecognisionFinished?.Invoke();
         }
 
         public async Task LoadAllAsync(Action<double> callback)
         {
-            await service.LoadAllAsync((obj, percent) => {
+            await storage.LoadAllAsync((obj, percent) => {
                     dispatcher.Invoke(() => AddToCollection(obj));
                     callback(percent);
                 });
@@ -43,10 +37,10 @@ namespace Lab
 
         public void Add(ImageObject obj)
         {
-            if (!service.Contains(obj)) // TODO async (EntityFramework needs multiple contexts or some queue)
+            if (!storage.Contains(obj)) // TODO async (EntityFramework needs multiple contexts or some queue)
             {
                 AddToCollection(obj);
-                service.Add(obj);
+                storage.Add(obj);
             }
         }
 
@@ -70,7 +64,7 @@ namespace Lab
             ChildChanged?.Invoke();
         }
 
-        public ObservableCollection<ImageObject> Get(string category)
+        public ObservableCollection<ImageObject>? Get(string category)
         {
             for (int j = 0; j < coll.Count; j++)
                 if (coll[j].Name == category)
@@ -96,7 +90,7 @@ namespace Lab
             for (int i = 0; i < coll.Count; i++)
                 coll[i].FoundObjects.Clear();
             coll.Clear();
-            service.Clear();
+            storage.Clear();
             ObjectCount = 0;
         }
 

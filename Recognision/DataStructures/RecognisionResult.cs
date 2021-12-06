@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using YOLOv4MLNet.DataStructures;
 
-namespace Lab
+namespace Recognision.DataStructures
 {
     public class RecognisionResult
     {

@@ -1,6 +1,7 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Transforms.Onnx;
+using Recognision.DataStructures;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ using YOLOv4MLNet.DataStructures;
 using static Microsoft.ML.Transforms.Image.ImageResizingEstimator;
 using YoloPredictionEngine = Microsoft.ML.PredictionEngine<YOLOv4MLNet.DataStructures.YoloV4BitmapData, YOLOv4MLNet.DataStructures.YoloV4Prediction>;
 
-namespace Lab
+namespace Recognision
 {
     public class ImageRecogniser : IDisposable
     {
@@ -30,46 +31,29 @@ namespace Lab
             "diningtable", "toilet", "tvmonitor", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven",
             "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"
         };
+
         readonly int ThreadNum;
         private BlockingCollection<YoloPredictionEngine> PredictionEngines;
 
         readonly string ModelPath;
         string FullModelPath;
-        string[] supportedExtensions = { ".jpg", ".png" };
-        readonly string ImagePath;
-        string FullImagePath;
 
         readonly CancellationTokenSource TokenSource;
         public CancellationToken Token { get => TokenSource.Token; }
 
-        string[] Filenames;
-        int imageCount = -1;
-        public int ImageCount
+        public ImageRecogniser(string modelPath, int threadNum = 2)
         {
-            get
-            {
-                TryLoadFiles();
-                return imageCount;
-            }
-        }
-        int processedCount = 0;
-
-        public ImageRecogniser(string fullPath, string modelPath, int threadNum = 2)
-        {
-            ImagePath = fullPath;
             ModelPath = modelPath;
             ThreadNum = threadNum;
             PredictionEngines = new BlockingCollection<YoloPredictionEngine>();
             TokenSource = new CancellationTokenSource();
         }
 
-        public async Task RecogniseAsync(ITargetBlock<RecognisionResult> outputBlock)
+        public async Task RecogniseAsync(string[]? filenames, ITargetBlock<RecognisionResult> outputBlock)
         {
             FullModelPath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ModelPath);
             //Console.WriteLine("Using model: " + FullModelPath);
             await InitPredictionEngines();
-
-            TryLoadFiles();
 
             // output - list of files: file name + its objects: class name + bounding box
             ParallelOptions options = new ParallelOptions();
@@ -91,10 +75,13 @@ namespace Lab
                 MaxDegreeOfParallelism = ThreadNum
             });
 
+            int imageCount = filenames == null ? 0 : filenames.Length;
+            int processedCount = 0;
+
             var counterBlock = new TransformBlock<RecognisionResult, RecognisionResult>(recognisionResult =>
             {
                 processedCount++;
-                if (processedCount == ImageCount)
+                if (processedCount == imageCount)
                     processImageBlock.Complete();
                 return recognisionResult;
             },
@@ -106,7 +93,7 @@ namespace Lab
 
             processImageBlock.LinkTo(counterBlock);
             counterBlock.LinkTo(outputBlock);
-            Parallel.For(0, ImageCount, options, fileNum => processImageBlock.Post(Filenames[fileNum]));
+            Parallel.For(0, imageCount, options, fileNum => processImageBlock.Post(filenames[fileNum]));
 
             await Task.WhenAll(processImageBlock.Completion);
         }
@@ -116,34 +103,18 @@ namespace Lab
             TokenSource.Cancel();
         }
 
-        private void TryLoadFiles()
-        {
-            if (imageCount >= 0)
-                return;
-
-            FullImagePath = ImagePath.Trim();
-            if (FullImagePath.Length == 0 || FullImagePath.Contains(new string(Path.GetInvalidFileNameChars())))
-            {
-                Filenames = null;
-                imageCount = 0;
-                return;
-            }
-
-            FullImagePath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ImagePath);
-            Filenames = Directory.EnumerateFiles(FullImagePath, "*.*")
-                .Where(file => supportedExtensions.Any(x => file.EndsWith(x, StringComparison.OrdinalIgnoreCase)))
-                .ToArray();
-            //Console.WriteLine("Files found: " + Filenames.Length);
-            imageCount = Filenames.Length;
-        }
-
         private IReadOnlyList<YoloV4Result> Predict(string fullPath, YoloPredictionEngine engine)
         {
             using (var bitmap = new Bitmap(Image.FromFile(fullPath)))
             {
-                var predict = engine.Predict(new YoloV4BitmapData() { Image = bitmap });
-                return predict.GetResults(classesNames, 0.3f, 0.7f);
+                return Predict(bitmap, engine);
             }
+        }
+
+        private IReadOnlyList<YoloV4Result> Predict(Bitmap bitmap, YoloPredictionEngine engine)
+        {
+            var predict = engine.Predict(new YoloV4BitmapData() { Image = bitmap });
+            return predict.GetResults(classesNames, 0.3f, 0.7f);
         }
 
         private async Task InitPredictionEngines()
@@ -151,7 +122,7 @@ namespace Lab
             MLContext mlContext = new MLContext();
             var model = InitModel(mlContext);
 
-            var ab = new ActionBlock<int>(async index =>
+            var ab = new ActionBlock<int>(index =>
             {
                 var engine = mlContext.Model.CreatePredictionEngine<YoloV4BitmapData, YoloV4Prediction>(model);
                 PredictionEngines.Add(engine);
