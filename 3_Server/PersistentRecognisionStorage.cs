@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lab
 {
@@ -16,8 +17,15 @@ namespace Lab
 
         public void Clear()
         {
-            db.Dispose();
-            db = new RecognisionStorageContext(false);
+            using (var connection = db.Database.GetDbConnection())
+            {
+                connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "DELETE FROM [Recognised]";
+                    var result = command.ExecuteNonQueryAsync();
+                }
+            }
         }
 
         public Task AddAsync(RecognisionData obj) // TODO workaround System.Reflection.TargetInvocationException

@@ -17,7 +17,7 @@ namespace Lab
 
     class RecogniserWrapper : IRecogniser
     {
-        private readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
+        private readonly static string modelPath = "..\\..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
         private ImageRecogniser recogniser = new ImageRecogniser(modelPath);
 
         int processingFiles = 0;

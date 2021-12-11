@@ -1,10 +1,10 @@
 ﻿using Lab.Contract;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Lab.Controllers
 {
@@ -15,14 +15,17 @@ namespace Lab.Controllers
         private IRecognisionStorage db;
         private IRecogniser recogniser;
 
-        public RecognisionController(IRecognisionStorage storage)
+        public RecognisionController(IRecognisionStorage storage, IRecogniser recogniser)
         {
             db = storage;
+            this.recogniser = recogniser;
+            System.Console.WriteLine("4");
         }
 
-        [HttpPut("{image}")]
+        [HttpPut]
         public ActionResult<RecognisionResult> PutImage(SingleImage image)
         {
+            System.Console.WriteLine("image");
             byte[] pixels = Convert.FromBase64String(image.ImageBase64);
             if (pixels.Length != image.Width * image.Height * 4) // TODO exclude magic constant
             {
@@ -39,6 +42,7 @@ namespace Lab.Controllers
         [HttpGet("{id}")]
         public ActionResult<RecognisionData> GetData(int id)
         {
+            System.Console.WriteLine("id " + id);
             RecognisionData? b = db.Load(id);
             if (b != null)
                 return b;
@@ -46,17 +50,20 @@ namespace Lab.Controllers
                 return StatusCode(404, "RecognisionData with given id is not found");
         }
 
-        [HttpGet("/all")]
+        /*[HttpGet]
+        [Route("all")]
         public ActionResult<int[]> GetIds()
         {
+            System.Console.WriteLine("all");
             return db.LoadIds();
-        }
+        }*/
 
-        [HttpDelete("/clear")]
+        [HttpDelete]
         public ActionResult DeleteClear()
         {
+            System.Console.WriteLine("clear");
             db.Clear();
-            return StatusCode(200);
+            return Ok();
         }
     }
 }
