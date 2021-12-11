@@ -50,7 +50,10 @@ namespace Recognision
             }
             ModelPath = modelPath;
             FullModelPath = Path.GetFullPath(/*Directory.GetCurrentDirectory() + */ModelPath);
+            if (!File.Exists(FullModelPath))
+                throw new ArgumentException($"Model file doesn't exists at \"{FullModelPath}\"");
             //Console.WriteLine("Using model: " + FullModelPath);
+
             ThreadNum = threadNum;
             RecognisionTasks = new BlockingCollection<IRecognisionTask>();
             PredictionEngines = new BlockingCollection<YoloPredictionEngine>();

@@ -10,7 +10,7 @@ namespace Lab
 {
     class RecogniserWrapper
     {
-        private readonly static string modelPath = "..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
+        private readonly static string modelPath = "..\\..\\..\\..\\..\\YOLOv4 Model\\yolov4.onnx";
         private ImageRecogniser? recogniser;
 
         public event Action RecognisionFinished;

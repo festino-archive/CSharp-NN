@@ -4,11 +4,14 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lab
 {
     class PersistentRecognisionStorage : IRecognisionStorage
     {
+        private readonly static PixelFormat Format = PixelFormats.Bgra32;
+
         private RecognisionStorageContext db;
 
         public PersistentRecognisionStorage()
@@ -16,10 +19,18 @@ namespace Lab
             db = new RecognisionStorageContext(true);
         }
 
+        // https://stackoverflow.com/questions/46114711/execute-sql-command-in-entity-framework-core-2-0-to-delete-all-data-in-a-table
         public void Clear()
         {
-            db.Dispose();
-            db = new RecognisionStorageContext(false);
+            using (var connection = db.Database.GetDbConnection())
+            {
+                connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "DELETE FROM [Recognised]";
+                    var result = command.ExecuteNonQueryAsync();
+                }
+            }
         }
 
         public Task AddAsync(ImageObject obj) // TODO workaround System.Reflection.TargetInvocationException
@@ -145,8 +156,8 @@ namespace Lab
 
         private WriteableBitmap FromBytes(byte[] pixels, int width, int height)
         {
-            WriteableBitmap bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
-            int stride = width * ((bitmap.Format.BitsPerPixel + 7) / 8);
+            WriteableBitmap bitmap = new WriteableBitmap(width, height, 96, 96, Format, null);
+            int stride = width * ((Format.BitsPerPixel + 7) / 8);
             bitmap.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
             return bitmap;
         }
@@ -156,6 +167,12 @@ namespace Lab
             BitmapSource source = cropped.Source;
             int width = cropped.SourceRect.Width;
             int height = cropped.SourceRect.Height;
+            if (source.Format != Format)
+            {
+                FormatConvertedBitmap bitmap = new FormatConvertedBitmap(source, Format, null, 0.0);
+                source = bitmap;
+            }
+
             int stride = width * ((source.Format.BitsPerPixel + 7) / 8);
             byte[] pixels = new byte[height * stride];
             source.CopyPixels(cropped.SourceRect, pixels, stride, 0);

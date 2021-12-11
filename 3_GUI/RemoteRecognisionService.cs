@@ -13,17 +13,21 @@ namespace Lab
 {
     class RemoteRecognisionService : IRecognisionService
     {
-        public string Host { get; set; } = "localhost:5000";
+        public string Host { get; set; } = "http://localhost:5000";
 
         public async Task<ImageObject[]?> RecogniseAsync(string filepath)
         {
             Uri uri = new Uri(filepath);
             BitmapSource source = new BitmapImage(uri);
             SingleImage recognisingImage = new SingleImage(Path.GetFileName(filepath), ToBytes(source), (int)source.Width, (int)source.Height);
-            string url = Host + "/api/recognision?image=" + JsonConvert.SerializeObject(recognisingImage);
+
+            string objectJson = JsonConvert.SerializeObject(recognisingImage);
+            HttpContent content = new StringContent(objectJson);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
 
             var client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync(url);
+            string url = Host + "/api/recognision";
+            HttpResponseMessage response = await client.PutAsync(url, content);
             if (response.IsSuccessStatusCode)
             {
                 RecognisionResult? parsed = JsonConvert.DeserializeObject<RecognisionResult>(await response.Content.ReadAsStringAsync());
@@ -46,9 +50,9 @@ namespace Lab
 
         public async Task<bool> Clear()
         {
-            string url = Host + "/api/recognision/clear";
+            string url = Host + "/api/recognision";
             var client = new HttpClient();
-            HttpResponseMessage response = await client.GetAsync(url);
+            HttpResponseMessage response = await client.DeleteAsync(url);
             if (response.IsSuccessStatusCode)
             {
                 return true;
